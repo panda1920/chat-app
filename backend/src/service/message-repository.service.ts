@@ -1,6 +1,6 @@
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb'
 import { Config } from '../config/env'
 
 @Injectable()

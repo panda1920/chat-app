@@ -1,8 +1,8 @@
-import { NestFactory } from '@nestjs/core'
 import { ConfigService } from '@nestjs/config'
-import { AppModule } from './app.module'
-import { Config } from './config/env'
+import { NestFactory } from '@nestjs/core'
 import { Logger } from 'nestjs-pino'
+import { AppModule } from './app.module'
+import { type Config } from './config/env'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true })
