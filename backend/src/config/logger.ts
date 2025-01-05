@@ -14,6 +14,8 @@ export default {
     //     destination: 1,
     //   }
     // },
+    autoLogging: false,
+    timestamp: () => `,"time":"${new Date(Date.now()).toISOString()}"`,
     genReqId: (req, _) => {
       const now = new Date().getTime()
       const path = req.url || ''
