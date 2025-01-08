@@ -20,3 +20,33 @@ services:
       - 30000:9229
     tty: true
     stdin_open: true
+    depends_on:
+      - dynamo
+    env_file:
+      - ./backend/.env
+
+  # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html#docker
+  dynamo:
+    image: amazon/dynamodb-local:latest
+    container_name: chat-dynamo
+    # https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.UsageNotes.html
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    volumes:
+      - ./backend/data/dynamoDB:/home/dynamodblocal/data
+    ports:
+      - 8000:8000
+    working_dir: /home/dynamodblocal
+  
+  dynamo-admin:
+    # https://hub.docker.com/r/aaronshaf/dynamodb-admin/
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: chat-dynamo-admin
+    ports:
+      - 8001:8001
+    environment:
+      DYNAMO_ENDPOINT: 'http://dynamo:8000'
+      AWS_REGION: 'ap-northeast-1'
+      AWS_ACCESS_KEY_ID: 'dummyAccessKey'
+      AWS_SECRET_ACCESS_KEY: 'dummySecret'
+    depends_on:
+      - dynamo
