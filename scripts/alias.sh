@@ -6,10 +6,23 @@ COMPOSE_FILE=$ROOT_DIR/docker-compose.yml
 COMPOSE_COMMAND="docker compose -f $COMPOSE_FILE"
 BACKEND_EXEC_BASH="$COMPOSE_COMMAND exec -it backend bash -c"
 
-alias up="$COMPOSE_COMMAND up -d"
 alias down="$COMPOSE_COMMAND down"
 alias logs="$COMPOSE_COMMAND logs"
 alias sso-login="${BACKEND_EXEC_BASH} 'aws sso login --use-device-code'"
+
+function up() {
+  local envFile="$ROOT_DIR/env/.env.local";
+  
+  cp $envFile "$ROOT_DIR/backend/.env";
+  $COMPOSE_COMMAND up -d;
+}
+
+function upaws() {
+  local envFile="$ROOT_DIR/env/.env.local.aws";
+  
+  cp $envFile "$ROOT_DIR/backend/.env";
+  $COMPOSE_COMMAND up -d;
+}
 
 # reset local dynamodb
 function resetDynamo() {
