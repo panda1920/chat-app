@@ -14,4 +14,9 @@ export class AppController {
   postMessage(@Body() body: { message: string }) {
     return this.appService.postMessage(body.message)
   }
+
+  @Get('/messages')
+  getMessages() {
+    return this.appService.getMessages()
+  }
 }

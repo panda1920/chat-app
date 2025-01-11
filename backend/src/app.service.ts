@@ -18,4 +18,9 @@ export class AppService {
       'Message posting complete. Result: ' + JSON.stringify(result),
     )
   }
+
+  async getMessages() {
+    this.logger.log('Getting message')
+    return await this.messageRepository.getMessages(1)
+  }
 }
