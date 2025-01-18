@@ -9,6 +9,7 @@ BACKEND_EXEC_BASH="$COMPOSE_COMMAND exec -it backend bash -c"
 alias down="$COMPOSE_COMMAND down"
 alias logs="$COMPOSE_COMMAND logs"
 alias sso-login="${BACKEND_EXEC_BASH} 'aws sso login --use-device-code'"
+alias reload=". $CUR_DIR/alias.sh"
 
 function up() {
   local envFile="$ROOT_DIR/env/.env.local";
@@ -22,6 +23,10 @@ function upaws() {
   
   cp $envFile "$ROOT_DIR/backend/.env";
   $COMPOSE_COMMAND up -d;
+}
+
+function goin() {
+  $COMPOSE_COMMAND exec -it $1 bash
 }
 
 # reset local dynamodb
@@ -63,4 +68,14 @@ function setupDynamo() {
     --no-cli-pager \
   ';
   echo 'Table created!';
+}
+
+function connectws() {
+  curl --no-buffer --include \
+    -H "Connection: Upgrade" \
+    -H "Origin: http://localhost:3001" \
+    -H "Upgrade: websocket" \
+    -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+    -H "Sec-WebSocket-Version: 13" \
+    'http://localhost:3001';
 }

@@ -2,7 +2,7 @@ name: chat_app
 
 services:
   backend:
-    image: panda1920/chat_app:dev
+    image: panda1920/chat-api-backend:dev
     build:
       context: ./backend
       dockerfile: ./docker/dev/Dockerfile
@@ -50,3 +50,25 @@ services:
       AWS_SECRET_ACCESS_KEY: 'dummySecret'
     depends_on:
       - dynamo
+
+  ws-handler:
+    image: panda1920/chat-api-nodejs:dev
+    build:
+      context: ./ws-handler
+      dockerfile: ./docker/dev/Dockerfile
+      args:
+        UID: 1000 # set your userid here
+        GID: 1000 # set your groupid here
+    container_name: chat-ws-handler
+    command: "npx tsx src/main.ts"
+    volumes:
+      - ./ws-handler:/app
+    ports:
+      - 3001:3000
+      - 30001:9229
+    tty: true
+    stdin_open: true
+    depends_on:
+      - dynamo
+    # env_file:
+    #   - ./backend/.env
