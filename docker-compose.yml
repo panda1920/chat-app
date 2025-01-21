@@ -51,7 +51,7 @@ services:
     depends_on:
       - dynamo
 
-  ws-handler:
+  ws-handler1:
     image: panda1920/chat-api-nodejs:dev
     build:
       context: ./ws-handler
@@ -59,7 +59,7 @@ services:
       args:
         UID: 1000 # set your userid here
         GID: 1000 # set your groupid here
-    container_name: chat-ws-handler
+    container_name: chat-ws-handler1
     command: "npx tsx src/main.ts"
     volumes:
       - ./ws-handler:/app
@@ -72,3 +72,40 @@ services:
       - dynamo
     # env_file:
     #   - ./backend/.env
+
+  ws-handler2:
+    image: panda1920/chat-api-nodejs:dev
+    build:
+      context: ./ws-handler
+      dockerfile: ./docker/dev/Dockerfile
+      args:
+        UID: 1000 # set your userid here
+        GID: 1000 # set your groupid here
+    container_name: chat-ws-handler2
+    command: "npx tsx src/main.ts"
+    volumes:
+      - ./ws-handler:/app
+    ports:
+      - 3002:3000
+      - 30002:9229
+    tty: true
+    stdin_open: true
+    depends_on:
+      - dynamo
+    # env_file:
+    #   - ./backend/.env
+
+  chat-lb:
+    image: nginx:latest
+    container_name: chat-lb
+    volumes:
+      - ./lb/conf/:/etc/nginx/conf.d
+      - ./lb/logs:/var/log/nginx
+    ports:
+      - 8080:80
+    tty: true
+    stdin_open: true
+    depends_on:
+      - backend
+      - ws-handler1
+      - ws-handler2
