@@ -60,7 +60,7 @@ services:
         UID: 1000 # set your userid here
         GID: 1000 # set your groupid here
     container_name: chat-ws-handler1
-    command: "npx tsx src/main.ts"
+    command: "npm run start:debug"
     volumes:
       - ./ws-handler:/app
     ports:
@@ -82,7 +82,7 @@ services:
         UID: 1000 # set your userid here
         GID: 1000 # set your groupid here
     container_name: chat-ws-handler2
-    command: "npx tsx src/main.ts"
+    command: "npm run start:debug"
     volumes:
       - ./ws-handler:/app
     ports:
@@ -90,6 +90,7 @@ services:
       - 30002:9229
     tty: true
     stdin_open: true
+    restart: unless-stopped
     depends_on:
       - dynamo
     # env_file:
@@ -105,6 +106,7 @@ services:
       - 8080:80
     tty: true
     stdin_open: true
+    restart: unless-stopped
     depends_on:
       - backend
       - ws-handler1
