@@ -1,4 +1,28 @@
-name: chat_app
+name: chat-app
+
+# base args used in custom containers
+x-uid-gid: &uid-gid
+  UID: 1000 # set your userid here
+  GID: 1000 # set your groupid here
+
+# base setting for ws-handler service
+x-ws-handler-base: &ws-handler-base
+  image: panda1920/chat-api-nodejs:dev
+  build:
+    context: ./ws-handler
+    dockerfile: ./docker/dev/Dockerfile
+    args:
+      <<: *uid-gid
+  command: "npm run start:debug"
+  volumes:
+    - ./ws-handler:/app
+  tty: true
+  stdin_open: true
+  restart: unless-stopped
+  depends_on:
+    - dynamo
+  # env_file:
+  #   - ./backend/.env
 
 services:
   backend:
@@ -7,8 +31,7 @@ services:
       context: ./backend
       dockerfile: ./docker/dev/Dockerfile
       args:
-        UID: 1000 # set your userid here
-        GID: 1000 # set your groupid here
+        <<: *uid-gid
     container_name: chat-backend
     command: "npm run start:debug"
     volumes:
@@ -52,49 +75,18 @@ services:
       - dynamo
 
   ws-handler1:
-    image: panda1920/chat-api-nodejs:dev
-    build:
-      context: ./ws-handler
-      dockerfile: ./docker/dev/Dockerfile
-      args:
-        UID: 1000 # set your userid here
-        GID: 1000 # set your groupid here
+    <<: *ws-handler-base
     container_name: chat-ws-handler1
-    command: "npm run start:debug"
-    volumes:
-      - ./ws-handler:/app
     ports:
       - 3001:3000
       - 30001:9229
-    tty: true
-    stdin_open: true
-    depends_on:
-      - dynamo
-    # env_file:
-    #   - ./backend/.env
 
   ws-handler2:
-    image: panda1920/chat-api-nodejs:dev
-    build:
-      context: ./ws-handler
-      dockerfile: ./docker/dev/Dockerfile
-      args:
-        UID: 1000 # set your userid here
-        GID: 1000 # set your groupid here
+    <<: *ws-handler-base
     container_name: chat-ws-handler2
-    command: "npm run start:debug"
-    volumes:
-      - ./ws-handler:/app
     ports:
       - 3002:3000
       - 30002:9229
-    tty: true
-    stdin_open: true
-    restart: unless-stopped
-    depends_on:
-      - dynamo
-    # env_file:
-    #   - ./backend/.env
 
   chat-lb:
     image: nginx:latest
