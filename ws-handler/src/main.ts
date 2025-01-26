@@ -2,10 +2,13 @@ import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 
 function main() {
-  const server = createServer()
+  const server = createServer((_, res) => {
+    // basic http listener that returns error
+    res.writeHead(400)
+    res.end('This is a websocket server. Upgrade required.')
+  })
   const wss = new WebSocketServer({
     noServer: true,
-    // port: 3000,
   })
 
   // websocket setting
@@ -24,7 +27,7 @@ function main() {
   server.on('upgrade', (req, socket, head) => {
     socket.on('error', console.error)
 
-    // put some sort of authentication here
+    // TODO: put some sort of authentication here
     console.log(`headers: ${JSON.stringify(req.headers)}`)
     console.log(`method: ${JSON.stringify(req.method)}`)
     console.log(`url: ${JSON.stringify(req.url)}`)
