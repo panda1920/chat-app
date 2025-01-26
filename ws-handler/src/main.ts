@@ -40,7 +40,7 @@ function main() {
     console.error(err)
   })
 
-  const port = 3000
+  const port = parseInt(process.env.PORT || '3000')
   server.listen(port, '0.0.0.0', () =>
     console.log(`Listening on port: ${port}`),
   )
