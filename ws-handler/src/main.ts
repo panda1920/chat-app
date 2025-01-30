@@ -1,5 +1,8 @@
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
+import { authenticate } from './auth'
+import { onConnection, onMessage } from './handlers'
+import { type Message } from './models'
 
 function main() {
   const server = createServer((_, res) => {
@@ -12,25 +15,47 @@ function main() {
   })
 
   // websocket setting
-  wss.on('connection', (ws, req) => {
+  wss.on('connection', async (ws, req) => {
+    // TODO: maybe I should keep some connection state here, extracted from req
     ws.on('error', console.error)
-
     console.log('You have made a connection!')
 
-    ws.on('message', (data) => {
-      console.log(`You have received a following data!: ${data}`)
+    const sendMessage = (message: Message) => {
+      ws.send(JSON.stringify(message))
+    }
+
+    await onConnection(sendMessage)
+
+    ws.on('message', async (data) => {
+      // TODO: parse incoming data from message and pass to onMessage
+      const dummyMessage = {
+        from: 111,
+        message: 'hello world',
+        createdAt: 1767052800,
+      } satisfies Message
+      await onMessage(dummyMessage)
+
+      console.log(`You have received the following data!: ${data}`)
       ws.send('Thank you for the data :)')
     })
   })
 
   // http server setting
-  server.on('upgrade', (req, socket, head) => {
-    socket.on('error', console.error)
+  server.on('upgrade', async (req, socket, head) => {
+    socket.on('error', onSocketError)
 
-    // TODO: put some sort of authentication here
+    // TODO: parse parameters and pass to authenticate()
     console.log(`headers: ${JSON.stringify(req.headers)}`)
     console.log(`method: ${JSON.stringify(req.method)}`)
     console.log(`url: ${JSON.stringify(req.url)}`)
+    const result = await authenticate()
+    if (!result) {
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+      socket.destroy()
+      return
+    }
+
+    socket.removeListener('error', onSocketError)
 
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit('connection', ws, req)
@@ -44,6 +69,10 @@ function main() {
   server.listen(port, '0.0.0.0', () =>
     console.log(`Listening on port: ${port}`),
   )
+}
+
+function onSocketError(error: Error) {
+  console.error(error)
 }
 
 main()
