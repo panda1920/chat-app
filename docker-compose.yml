@@ -103,3 +103,28 @@ services:
       - backend
       - ws-handler1
       - ws-handler2
+
+  broker:
+    # https://github.com/apache/kafka/blob/trunk/docker/examples/README.md
+    # https://hub.docker.com/r/apache/kafka-native
+    # https://docs.confluent.io/platform/current/installation/docker/config-reference.html#required-ak-configurations-for-kraft-mode
+    image: apache/kafka-native:latest
+    container_name: chat-broker
+    volumes:
+      - ./broker/kafka/data:/tmp/kafka-logs
+    env_file:
+      - ./broker/kafka/.env
+    ports:
+      - 9092:9092
+
+  broker-ui:
+    # https://github.com/provectus/kafka-ui
+    # https://docs.kafka-ui.provectus.io/
+    image: provectuslabs/kafka-ui:latest
+    container_name: chat-broker-ui
+    ports:
+      - 9090:8080
+    volumes:
+      - ./broker/kafka/ui/config:/etc/kafkaui
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true

@@ -1,0 +1,11 @@
+auth:
+  type: DISABLED
+kafka:
+  clusters:
+  - bootstrapServers: broker:9092
+    name: chat
+    properties: {}
+    readOnly: false
+rbac:
+  roles: []
+webclient: {}
