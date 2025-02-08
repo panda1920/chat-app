@@ -1,9 +1,16 @@
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
-import { type Authorizer, type MessageHandler } from '../../app/types'
+import {
+  type OnConnectHandler,
+  type Authorizer,
+  type MessageHandler,
+} from '../../app/types'
 import { type Message } from '../../domain/models'
 
-function setupWebsocket(handleMessage: MessageHandler) {
+function setupWebsocket(
+  handleMessage: MessageHandler,
+  onConnection: OnConnectHandler,
+) {
   const wss = new WebSocketServer({
     noServer: true,
   })
@@ -18,13 +25,15 @@ function setupWebsocket(handleMessage: MessageHandler) {
     const sendMessage = (message: Message) => {
       ws.send(JSON.stringify(message))
     }
+    // TODO: parse chatId from url
+    onConnection('test_chat', sendMessage)
 
     // incoming messages
     ws.on('message', async (data) => {
       // TODO: parse incoming data from message and pass to onMessage
       const dummyMessage = {
         from: 'test_user',
-        chatId: '1123123',
+        chatId: 'test_chat',
         message: data.toString(),
         createdAt: 1767052800,
       } satisfies Message
@@ -81,8 +90,9 @@ export function setupServer(config: {
   port: number
   authorize: Authorizer
   handleMessage: MessageHandler
+  onConnection: OnConnectHandler
 }) {
-  const wss = setupWebsocket(config.handleMessage)
+  const wss = setupWebsocket(config.handleMessage, config.onConnection)
   const server = setupHttp(wss, config.authorize)
   server.listen(config.port, '0.0.0.0', () =>
     console.log(`Listening on port: ${config.port}`),
