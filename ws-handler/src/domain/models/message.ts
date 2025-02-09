@@ -1,5 +1,5 @@
 import { z, ZodError } from 'zod'
-import { InternalServerError, ParsingError } from '../app/errors'
+import { InternalServerError, ParsingError } from '../../app/errors'
 
 const Message = z.object({
   chatId: z

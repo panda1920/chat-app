@@ -1,6 +1,6 @@
 import { hostname } from 'node:os'
 import { Kafka } from 'kafkajs'
-import { parseMessage, type Message } from '../../domain/models'
+import { parseMessage, type Message } from '../../domain/models/message'
 
 // https://kafka.apache.org/documentation/#producerconfigs_client.id
 const CLIENT_ID = 'chat-app'

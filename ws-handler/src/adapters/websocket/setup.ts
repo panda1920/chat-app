@@ -1,16 +1,13 @@
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import {
-  type OnConnectHandler,
+  type ConnectHandler,
   type Authorizer,
   type MessageHandler,
 } from '../../app/types'
-import { serializeMessage, type Message } from '../../domain/models'
+import { serializeMessage, type Message } from '../../domain/models/message'
 
-function setupWebsocket(
-  handleMessage: MessageHandler,
-  onConnection: OnConnectHandler,
-) {
+function setupWebsocket(onMessage: MessageHandler, onConnect: ConnectHandler) {
   const wss = new WebSocketServer({
     noServer: true,
   })
@@ -26,7 +23,7 @@ function setupWebsocket(
       ws.send(serializeMessage(message))
     }
     // TODO: parse chatId from url
-    onConnection('test_chat', sendMessage)
+    onConnect('test_chat', sendMessage)
 
     // incoming messages
     ws.on('message', async (data) => {
@@ -36,7 +33,7 @@ function setupWebsocket(
         message: data.toString(),
         createdAt: 1767052800,
       } satisfies Message
-      await handleMessage(dummyMessage)
+      await onMessage(dummyMessage)
     })
   })
 
@@ -85,10 +82,10 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
 export function setupServer(config: {
   port: number
   authorize: Authorizer
-  handleMessage: MessageHandler
-  onConnection: OnConnectHandler
+  onMessage: MessageHandler
+  onConnect: ConnectHandler
 }) {
-  const wss = setupWebsocket(config.handleMessage, config.onConnection)
+  const wss = setupWebsocket(config.onMessage, config.onConnect)
   const server = setupHttp(wss, config.authorize)
   server.listen(config.port, '0.0.0.0', () =>
     console.log(`Listening on port: ${config.port}`),
