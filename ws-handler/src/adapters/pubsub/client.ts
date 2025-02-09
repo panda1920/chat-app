@@ -1,6 +1,6 @@
 import { hostname } from 'node:os'
 import { Kafka } from 'kafkajs'
-import { type Message } from '../../domain/models'
+import { parseMessage, type Message } from '../../domain/models'
 
 // https://kafka.apache.org/documentation/#producerconfigs_client.id
 const CLIENT_ID = 'chat-app'
@@ -9,7 +9,7 @@ export const MESSAGES_TOPIC = 'chat-messages'
 // https://kafka.js.org/docs/configuration
 const kafka = new Kafka({
   clientId: CLIENT_ID,
-  brokers: [process.env.BROKER_HOST],
+  brokers: [process.env.BROKER_HOST || ''],
   // logLevel: logLevel.ERROR,
 })
 
@@ -29,11 +29,7 @@ export async function initBroker() {
     eachMessage: async ({ message, heartbeat, pause }) => {
       // for now it is assumed that the consumer is subscribed to one topic only
       // so I am not checking which topic message is coming from
-      console.log('each Message!')
-
-      // TODO: make parsing of value more robust
-      const { value } = message
-      const decoded = JSON.parse(value.toString()) as Message
+      const decoded = parseMessage(message.value?.toString())
 
       // send message to all subscriptions that have the same chatId
       const subscriptions = subscriptionsByChatId[decoded.chatId] ?? []

@@ -5,7 +5,7 @@ import {
   type Authorizer,
   type MessageHandler,
 } from '../../app/types'
-import { type Message } from '../../domain/models'
+import { serializeMessage, type Message } from '../../domain/models'
 
 function setupWebsocket(
   handleMessage: MessageHandler,
@@ -23,14 +23,13 @@ function setupWebsocket(
 
     // a callback to send meessage to websocket
     const sendMessage = (message: Message) => {
-      ws.send(JSON.stringify(message))
+      ws.send(serializeMessage(message))
     }
     // TODO: parse chatId from url
     onConnection('test_chat', sendMessage)
 
     // incoming messages
     ws.on('message', async (data) => {
-      // TODO: parse incoming data from message and pass to onMessage
       const dummyMessage = {
         from: 'test_user',
         chatId: 'test_chat',
@@ -38,9 +37,6 @@ function setupWebsocket(
         createdAt: 1767052800,
       } satisfies Message
       await handleMessage(dummyMessage)
-
-      console.log(`You have received the following data!: ${data}`)
-      ws.send('Thank you for the data :)')
     })
   })
 
