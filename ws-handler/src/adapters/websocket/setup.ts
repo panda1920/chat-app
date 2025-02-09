@@ -1,13 +1,20 @@
-import { createServer } from 'node:http'
+import { createHash } from 'node:crypto'
+import { createServer, type IncomingMessage } from 'node:http'
 import { WebSocketServer } from 'ws'
 import {
   type ConnectHandler,
   type Authorizer,
   type MessageHandler,
+  type DisconnectHandler,
 } from '../../app/types'
 import { serializeMessage, type Message } from '../../domain/models/message'
+import { type RequestContext } from '../../domain/models/request-context'
 
-function setupWebsocket(onMessage: MessageHandler, onConnect: ConnectHandler) {
+function setupWebsocket(
+  onMessage: MessageHandler,
+  onConnect: ConnectHandler,
+  onDisconnect: DisconnectHandler,
+) {
   const wss = new WebSocketServer({
     noServer: true,
   })
@@ -35,6 +42,11 @@ function setupWebsocket(onMessage: MessageHandler, onConnect: ConnectHandler) {
       } satisfies Message
       await onMessage(dummyMessage)
     })
+
+    ws.on('close', async () => {
+      console.log('closing connection!!!')
+      await onDisconnect('test_chat', sendMessage)
+    })
   })
 
   return wss
@@ -55,11 +67,8 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
   server.on('upgrade', async (req, socket, head) => {
     socket.on('error', onSocketError)
 
-    // TODO: parse parameters and pass to authorize()
-    console.log(`headers: ${JSON.stringify(req.headers)}`)
-    console.log(`method: ${JSON.stringify(req.method)}`)
-    console.log(`url: ${JSON.stringify(req.url)}`)
-    const result = await authorize()
+    const context = createRequestContext(req)
+    const result = await authorize(context)
     if (!result) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
       socket.destroy()
@@ -84,10 +93,36 @@ export function setupServer(config: {
   authorize: Authorizer
   onMessage: MessageHandler
   onConnect: ConnectHandler
+  onDisconnect: DisconnectHandler
 }) {
-  const wss = setupWebsocket(config.onMessage, config.onConnect)
+  const wss = setupWebsocket(
+    config.onMessage,
+    config.onConnect,
+    config.onDisconnect,
+  )
   const server = setupHttp(wss, config.authorize)
   server.listen(config.port, '0.0.0.0', () =>
     console.log(`Listening on port: ${config.port}`),
   )
+}
+// create request context from http req
+export function createRequestContext(req: IncomingMessage) {
+  const url = req.url || ''
+
+  return {
+    url,
+    startAt: Date.now(),
+    traceId: generateTraceId(url),
+  } satisfies RequestContext
+}
+
+function generateTraceId(url: string) {
+  const now = new Date().getTime()
+  const path = url || ''
+  const random = Math.random()
+
+  return createHash('sha1')
+    .update(now + path + random)
+    .digest('hex')
+    .substring(0, 16)
 }

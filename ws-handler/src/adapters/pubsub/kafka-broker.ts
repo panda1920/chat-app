@@ -17,15 +17,22 @@ export async function unsubscribeForMessage(
   chatId: Message['chatId'],
   callback: (message: Message) => Promise<void>,
 ) {
-  console.log('🚀 ~ subscriptionsByChatId:', subscriptionsByChatId)
+  console.log(
+    '🚀 ~ subscriptionsByChatId:',
+    subscriptionsByChatId[chatId]?.length,
+  )
   const subscriptions = subscriptionsByChatId[chatId] ?? []
   const foundIndex = subscriptions.findIndex(
     (subscription) => subscription === callback,
   )
+  console.log('🚀 ~ foundIndex:', foundIndex)
   if (foundIndex > -1) {
     subscriptions.splice(foundIndex, 1)
   }
-  console.log('🚀 ~ subscriptionsByChatId:', subscriptionsByChatId)
+  console.log(
+    '🚀 ~ subscriptionsByChatId:',
+    subscriptionsByChatId[chatId]?.length,
+  )
 }
 
 export async function publishMessage(message: Message) {
