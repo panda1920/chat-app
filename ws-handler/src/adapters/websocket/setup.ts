@@ -25,9 +25,9 @@ function setupWebsocket(
     ws.on('error', console.error)
 
     // a callback to send meessage to websocket
-    const returnMessage = (message: Message) => {
+    const returnMessage = AsyncResource.bind((message: Message) => {
       ws.send(serializeMessage(message))
-    }
+    })
     onConnect(returnMessage)
 
     // incoming messages
