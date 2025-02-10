@@ -9,3 +9,7 @@ export class InternalServerError extends WsHandlerError {
 export class ParsingError extends WsHandlerError {
   statusCode = 400
 }
+
+export class UnauthorizedError extends WsHandlerError {
+  statusCode = 401
+}

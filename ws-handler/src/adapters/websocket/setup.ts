@@ -1,6 +1,7 @@
-import { createHash } from 'node:crypto'
-import { createServer, type IncomingMessage } from 'node:http'
+import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
+import { createRequestContext } from './context'
+import { contextStorage } from '../../app/storage'
 import {
   type ConnectHandler,
   type Authorizer,
@@ -8,7 +9,6 @@ import {
   type DisconnectHandler,
 } from '../../app/types'
 import { serializeMessage, type Message } from '../../domain/models/message'
-import { type RequestContext } from '../../domain/models/request-context'
 
 function setupWebsocket(
   onMessage: MessageHandler,
@@ -65,20 +65,23 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
 
   // http server setting
   server.on('upgrade', async (req, socket, head) => {
-    socket.on('error', onSocketError)
+    // run all further code under the request context
+    contextStorage.run(createRequestContext(req), async () => {
+      socket.on('error', onSocketError)
 
-    const context = createRequestContext(req)
-    const result = await authorize(context)
-    if (!result) {
-      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
-      socket.destroy()
-      return
-    }
+      try {
+        await authorize()
+      } catch {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+        socket.destroy()
+        return
+      }
 
-    socket.removeListener('error', onSocketError)
+      socket.removeListener('error', onSocketError)
 
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req)
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit('connection', ws, req)
+      })
     })
   })
   server.on('error', (err) => {
@@ -104,25 +107,4 @@ export function setupServer(config: {
   server.listen(config.port, '0.0.0.0', () =>
     console.log(`Listening on port: ${config.port}`),
   )
-}
-// create request context from http req
-export function createRequestContext(req: IncomingMessage) {
-  const url = req.url || ''
-
-  return {
-    url,
-    startAt: Date.now(),
-    traceId: generateTraceId(url),
-  } satisfies RequestContext
-}
-
-function generateTraceId(url: string) {
-  const now = new Date().getTime()
-  const path = url || ''
-  const random = Math.random()
-
-  return createHash('sha1')
-    .update(now + path + random)
-    .digest('hex')
-    .substring(0, 16)
 }
