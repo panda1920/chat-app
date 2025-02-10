@@ -4,4 +4,6 @@ export type RequestContext = {
   url: string
   startAt: number
   traceId: string
+  chatId: string
+  userId: string
 }

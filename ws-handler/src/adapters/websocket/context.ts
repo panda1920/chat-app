@@ -10,6 +10,8 @@ export function createRequestContext(req: IncomingMessage) {
     url,
     startAt: Date.now(),
     traceId: generateTraceId(url),
+    chatId: '',
+    userId: '',
   } satisfies RequestContext
 }
 

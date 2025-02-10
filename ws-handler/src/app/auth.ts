@@ -8,6 +8,9 @@ export async function authorize() {
 
   const chatId = validateChatId(context)
   // TODO: do some authorization with chatId
+  context.chatId = chatId
+  // TODO: get userId from somewhere
+  context.userId = 'test_user'
 }
 
 function validateChatId(context: RequestContext) {
