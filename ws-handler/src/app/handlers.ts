@@ -1,5 +1,4 @@
-import { InternalServerError } from './errors'
-import { contextStorage } from './storage'
+import { getContext } from './storage'
 import {
   type DisconnectHandler,
   type MessageHandler,
@@ -14,25 +13,22 @@ import { Message } from '../domain/models/message'
 
 // using arrow functions to enforce type
 // called when websocket connection is initiated
-export const onConnect: ConnectHandler = async (sendMessage) => {
-  const chatId = contextStorage.getStore()?.chatId
-  if (!chatId) throw new InternalServerError('chatId not found!')
+export const onConnect: ConnectHandler = async (returnMessage) => {
+  const chatId = getContext().chatId
 
-  await subscribeForMessage(chatId, async (message) => sendMessage(message))
+  await subscribeForMessage(chatId, async (message) => returnMessage(message))
 }
 
 // called when websocket connection is closed
-export const onDisconnect: DisconnectHandler = async (sendMessage) => {
-  const chatId = contextStorage.getStore()?.chatId
-  if (!chatId) throw new InternalServerError('chatId not found!')
+export const onDisconnect: DisconnectHandler = async (returnMessage) => {
+  const chatId = getContext().chatId
 
-  await unsubscribeForMessage(chatId, async (message) => sendMessage(message))
+  await unsubscribeForMessage(chatId, async (message) => returnMessage(message))
 }
 
 // called when message is coming into a websocket connection
 export const onMessage: MessageHandler = async (data) => {
-  const context = contextStorage.getStore()
-  if (!context) throw new InternalServerError('context not found!')
+  const context = getContext()
 
   const messageData = {
     chatId: context.chatId,
@@ -41,5 +37,6 @@ export const onMessage: MessageHandler = async (data) => {
     createdAt: context.startAt, // TODO: maybe this coudl change - get it from frontend maybe
   }
   const message = Message.parse(messageData)
+
   await publishMessage(message)
 }

@@ -25,10 +25,10 @@ function setupWebsocket(
     ws.on('error', console.error)
 
     // a callback to send meessage to websocket
-    const sendMessage = (message: Message) => {
+    const returnMessage = (message: Message) => {
       ws.send(serializeMessage(message))
     }
-    onConnect(sendMessage)
+    onConnect(returnMessage)
 
     // incoming messages
     ws.on(
@@ -42,7 +42,7 @@ function setupWebsocket(
       'close',
       AsyncResource.bind(async () => {
         console.log('closing connection!!!')
-        await onDisconnect(sendMessage)
+        await onDisconnect(returnMessage)
       }),
     )
   })

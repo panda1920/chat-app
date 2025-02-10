@@ -1,10 +1,9 @@
 import { UnauthorizedError } from './errors'
-import { contextStorage } from './storage'
+import { getContext } from './storage'
 import { type RequestContext } from '../domain/models/request-context'
 
 export async function authorize() {
-  const context = contextStorage.getStore()
-  if (!context) throw new UnauthorizedError('No context')
+  const context = getContext()
 
   const chatId = validateChatId(context)
   // TODO: do some authorization with chatId
@@ -14,7 +13,7 @@ export async function authorize() {
 }
 
 function validateChatId(context: RequestContext) {
-  const validPathPattern = /^\/chat\/([^/?#]*)$/
+  const validPathPattern = /^\/chat\/([^/?#]+)$/
   const matches = context.url.match(validPathPattern)
   if (!matches) throw new UnauthorizedError('Invalid path')
 
