@@ -19,7 +19,7 @@ export const producer = kafka.producer()
 // https://kafka.js.org/docs/consuming
 export const consumer = kafka.consumer({ groupId: hostname() })
 
-export async function initBroker() {
+export async function setupBroker() {
   await producer.connect()
 
   await consumer.connect()

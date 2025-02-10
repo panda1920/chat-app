@@ -30,11 +30,12 @@ export const onDisconnect: DisconnectHandler = async (returnMessage) => {
 export const onMessage: MessageHandler = async (data) => {
   const context = getContext()
 
+  // TODO: parse incoming data
   const messageData = {
     chatId: context.chatId,
     message: data,
     from: context.userId,
-    createdAt: context.startAt, // TODO: maybe this coudl change - get it from frontend maybe
+    createdAt: Date.now(),
   }
   const message = Message.parse(messageData)
 

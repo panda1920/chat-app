@@ -21,7 +21,7 @@ function setupWebsocket(
   })
 
   // websocket setting
-  wss.on('connection', async (ws, _req) => {
+  wss.on('connection', async (ws) => {
     ws.on('error', console.error)
 
     // a callback to send meessage to websocket
@@ -83,7 +83,7 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
         head,
         // tell als to execute callback under the same context
         AsyncResource.bind((ws) => {
-          wss.emit('connection', ws, req)
+          wss.emit('connection', ws)
         }),
       )
     })
