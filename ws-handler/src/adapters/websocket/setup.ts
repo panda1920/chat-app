@@ -1,3 +1,4 @@
+import { AsyncResource } from 'node:async_hooks'
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import { createRequestContext } from './context'
@@ -21,32 +22,29 @@ function setupWebsocket(
 
   // websocket setting
   wss.on('connection', async (ws, _req) => {
-    // TODO: maybe I should keep some connection state here, extracted from req
     ws.on('error', console.error)
-    console.log('You have made a connection!')
 
     // a callback to send meessage to websocket
     const sendMessage = (message: Message) => {
       ws.send(serializeMessage(message))
     }
-    // TODO: parse chatId from url
-    onConnect('test_chat', sendMessage)
+    onConnect(sendMessage)
 
     // incoming messages
-    ws.on('message', async (data) => {
-      const dummyMessage = {
-        from: 'test_user',
-        chatId: 'test_chat',
-        message: data.toString(),
-        createdAt: 1767052800,
-      } satisfies Message
-      await onMessage(dummyMessage)
-    })
+    ws.on(
+      'message',
+      AsyncResource.bind(async (data) => {
+        await onMessage(data.toString())
+      }),
+    )
 
-    ws.on('close', async () => {
-      console.log('closing connection!!!')
-      await onDisconnect('test_chat', sendMessage)
-    })
+    ws.on(
+      'close',
+      AsyncResource.bind(async () => {
+        console.log('closing connection!!!')
+        await onDisconnect(sendMessage)
+      }),
+    )
   })
 
   return wss
@@ -79,9 +77,15 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
 
       socket.removeListener('error', onSocketError)
 
-      wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit('connection', ws, req)
-      })
+      wss.handleUpgrade(
+        req,
+        socket,
+        head,
+        // tell als to execute callback under the same context
+        AsyncResource.bind((ws) => {
+          wss.emit('connection', ws, req)
+        }),
+      )
     })
   })
   server.on('error', (err) => {

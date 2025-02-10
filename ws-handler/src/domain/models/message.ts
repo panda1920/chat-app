@@ -1,7 +1,7 @@
 import { z, ZodError } from 'zod'
 import { InternalServerError, ParsingError } from '../../app/errors'
 
-const Message = z.object({
+export const Message = z.object({
   chatId: z
     .string()
     .min(1)
@@ -19,8 +19,8 @@ const Message = z.object({
     .describe('The userId of the author of this message'),
   createdAt: z
     .number()
-    .gte(1_000_000_000)
-    .lte(9_999_999_999)
+    .gte(1_000_000_000_000)
+    .lte(9_999_999_999_999)
     .describe('When the message was entered, in unix timestamp'),
 })
 
