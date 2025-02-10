@@ -1,10 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 CUR_DIR=$(cd -- $(dirname -- ${BASH_SOURCE[0]:-$0}) && pwd)
 ROOT_DIR=$CUR_DIR/..
 COMPOSE_FILE=$ROOT_DIR/docker-compose.yml
 
 COMPOSE_COMMAND="docker compose -f $COMPOSE_FILE"
 BACKEND_EXEC_BASH="$COMPOSE_COMMAND exec -it backend bash -c"
+WS_URL="ws://localhost:8080/ws"
 
 alias down="$COMPOSE_COMMAND down"
 alias logs="$COMPOSE_COMMAND logs"
@@ -71,11 +72,6 @@ function setupDynamo() {
 }
 
 function connectws() {
-  curl --no-buffer --include \
-    -H "Connection: Upgrade" \
-    -H "Origin: http://localhost:3001" \
-    -H "Upgrade: websocket" \
-    -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
-    -H "Sec-WebSocket-Version: 13" \
-    'http://localhost:3001';
+  local chatId=${1:-test_chat}
+  wscat -c "${WS_URL}/chat/${chatId}"
 }
