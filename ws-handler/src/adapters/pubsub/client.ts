@@ -1,5 +1,6 @@
 import { hostname } from 'node:os'
 import { Kafka } from 'kafkajs'
+import { logger } from '../../app/logger'
 import { parseMessage, type Message } from '../../domain/models/message'
 
 // https://kafka.apache.org/documentation/#producerconfigs_client.id
@@ -27,6 +28,8 @@ export async function setupBroker() {
   await consumer.subscribe({ topics: [MESSAGES_TOPIC], fromBeginning: false })
   await consumer.run({
     eachMessage: async ({ message, heartbeat, pause }) => {
+      logger.info('Consumed message from broker')
+
       // for now it is assumed that the consumer is subscribed to one topic only
       // so I am not checking which topic message is coming from
       const decoded = parseMessage(message.value?.toString())

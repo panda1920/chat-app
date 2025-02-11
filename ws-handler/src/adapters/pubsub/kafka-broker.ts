@@ -1,5 +1,6 @@
 import { CompressionTypes } from 'kafkajs'
 import { producer, MESSAGES_TOPIC, subscriptionsByChatId } from './client'
+import { logger } from '../../app/logger'
 import { serializeMessage, type Message } from '../../domain/models/message'
 
 export async function subscribeForMessage(
@@ -17,21 +18,21 @@ export async function unsubscribeForMessage(
   chatId: Message['chatId'],
   callback: (message: Message) => Promise<void>,
 ) {
-  console.log(
-    '🚀 ~ subscriptionsByChatId:',
-    subscriptionsByChatId[chatId]?.length,
+  logger.debug(
+    `🚀 ~ subscriptionsByChatId:',
+    ${subscriptionsByChatId[chatId]?.length}`,
   )
   const subscriptions = subscriptionsByChatId[chatId] ?? []
   const foundIndex = subscriptions.findIndex(
     (subscription) => subscription === callback,
   )
-  console.log('🚀 ~ foundIndex:', foundIndex)
+  logger.debug(`🚀 ~ foundIndex:', ${foundIndex}`)
   if (foundIndex > -1) {
     subscriptions.splice(foundIndex, 1)
   }
-  console.log(
-    '🚀 ~ subscriptionsByChatId:',
-    subscriptionsByChatId[chatId]?.length,
+  logger.debug(
+    `🚀 ~ subscriptionsByChatId:',
+    ${subscriptionsByChatId[chatId]?.length}`,
   )
 }
 
@@ -41,5 +42,5 @@ export async function publishMessage(message: Message) {
     topic: MESSAGES_TOPIC,
     messages: [{ key: message.chatId, value: serializeMessage(message) }],
   })
-  console.log('publishing to broker!')
+  logger.info('Publishing message to broker')
 }

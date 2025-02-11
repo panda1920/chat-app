@@ -2,6 +2,7 @@ import { AsyncResource } from 'node:async_hooks'
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import { createRequestContext } from './context'
+import { logger } from '../../app/logger'
 import { contextStorage } from '../../app/storage'
 import {
   type ConnectHandler,
@@ -22,10 +23,13 @@ function setupWebsocket(
 
   // websocket setting
   wss.on('connection', async (ws) => {
-    ws.on('error', console.error)
+    ws.on('error', logger.error)
 
-    // a callback to send meessage to websocket
+    logger.info('New websocket connection established')
+
+    // a callback to send meessage back to connected websocket
     const returnMessage = AsyncResource.bind((message: Message) => {
+      logger.info('Returning messsage to client')
       ws.send(serializeMessage(message))
     })
     onConnect(returnMessage)
@@ -34,6 +38,7 @@ function setupWebsocket(
     ws.on(
       'message',
       AsyncResource.bind(async (data) => {
+        logger.info('New message arrived')
         await onMessage(data.toString())
       }),
     )
@@ -41,7 +46,7 @@ function setupWebsocket(
     ws.on(
       'close',
       AsyncResource.bind(async () => {
-        console.log('closing connection!!!')
+        logger.info('Closing websocket connection')
         await onDisconnect(returnMessage)
       }),
     )
@@ -51,7 +56,7 @@ function setupWebsocket(
 }
 
 function onSocketError(error: Error) {
-  console.error(error)
+  logger.error(error)
 }
 
 function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
@@ -70,6 +75,7 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
       try {
         await authorize()
       } catch {
+        logger.warn('Authorization failed')
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
         socket.destroy()
         return
@@ -89,7 +95,7 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
     })
   })
   server.on('error', (err) => {
-    console.error(err)
+    logger.error(err)
   })
 
   return server
@@ -109,6 +115,6 @@ export function setupServer(config: {
   )
   const server = setupHttp(wss, config.authorize)
   server.listen(config.port, '0.0.0.0', () =>
-    console.log(`Listening on port: ${config.port}`),
+    logger.info(`Listening on port: ${config.port}`),
   )
 }

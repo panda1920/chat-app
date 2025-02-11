@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "kafkajs": "^2.2.4",
+    "pino": "^9.6.0",
     "ws": "^8.18.0",
     "zod": "^3.24.1"
   },

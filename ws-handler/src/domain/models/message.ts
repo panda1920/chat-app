@@ -1,5 +1,6 @@
 import { z, ZodError } from 'zod'
 import { InternalServerError, ParsingError } from '../../app/errors'
+import { logger } from '../../app/logger'
 
 export const Message = z.object({
   chatId: z
@@ -37,11 +38,11 @@ export function parseMessage(input?: string) {
     if (e instanceof SyntaxError)
       throw new ParsingError(`${errorPrefix}: Failed to parse JSON string`)
     if (e instanceof ZodError) {
-      e.issues.map((issue) => console.error(JSON.stringify(issue)))
+      e.issues.map((issue) => logger.error(JSON.stringify(issue)))
       throw new ParsingError(`${errorPrefix}: Failed to parse message object`)
     }
 
-    console.error(JSON.stringify(e))
+    logger.error(e)
     throw new InternalServerError(`${errorPrefix}: Unexpected error`)
   }
 }
