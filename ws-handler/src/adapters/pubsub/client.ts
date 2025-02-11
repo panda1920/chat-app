@@ -1,7 +1,9 @@
 import { hostname } from 'node:os'
 import { Kafka } from 'kafkajs'
 import { logger } from '../../app/logger'
-import { parseMessage, type Message } from '../../domain/models/message'
+import { type MessageReturner } from '../../app/types'
+import { parseMessage } from '../../domain/models/message'
+import { type RequestContext } from '../../domain/models/request-context'
 
 // https://kafka.apache.org/documentation/#producerconfigs_client.id
 const CLIENT_ID = 'chat-app'
@@ -43,6 +45,6 @@ export async function setupBroker() {
 
 // all subscriptions go here
 export const subscriptionsByChatId: Record<
-  Message['chatId'],
-  ((message: Message) => Promise<void>)[]
+  RequestContext['chatId'],
+  MessageReturner[]
 > = {}

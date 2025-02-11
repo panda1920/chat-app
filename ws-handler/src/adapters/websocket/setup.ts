@@ -9,6 +9,7 @@ import {
   type Authorizer,
   type MessageHandler,
   type DisconnectHandler,
+  type MessageReturner,
 } from '../../app/types'
 import { serializeMessage, type Message } from '../../domain/models/message'
 
@@ -28,10 +29,12 @@ function setupWebsocket(
     logger.info('New websocket connection established')
 
     // a callback to send meessage back to connected websocket
-    const returnMessage = AsyncResource.bind((message: Message) => {
-      logger.info('Returning messsage to client')
-      ws.send(serializeMessage(message))
-    })
+    const returnMessage: MessageReturner = AsyncResource.bind(
+      async (message: Message) => {
+        logger.info('Returning messsage to client')
+        ws.send(serializeMessage(message))
+      },
+    )
     onConnect(returnMessage)
 
     // incoming messages

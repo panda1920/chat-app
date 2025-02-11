@@ -4,7 +4,7 @@ import { contextStorage } from './storage'
 // create pino options
 // https://github.com/pinojs/pino/blob/main/docs/api.md#options
 const options = {
-  name: 'main',
+  name: 'ws-handler',
   level: 'trace',
   mixin() {
     return {

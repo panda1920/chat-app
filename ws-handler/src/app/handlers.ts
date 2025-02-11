@@ -1,4 +1,5 @@
 import { getContext } from './storage'
+import { type MessageReturner } from './types'
 import {
   publishMessage,
   subscribeForMessage,
@@ -7,17 +8,17 @@ import {
 import { Message } from '../domain/models/message'
 
 // called when websocket connection is initiated
-export async function onConnect(returnMessage: (message: Message) => void) {
+export async function onConnect(returnMessage: MessageReturner) {
   const chatId = getContext().chatId
 
-  await subscribeForMessage(chatId, async (message) => returnMessage(message))
+  await subscribeForMessage(chatId, returnMessage)
 }
 
 // called when websocket connection is closed
-export async function onDisconnect(returnMessage: (message: Message) => void) {
+export async function onDisconnect(returnMessage: MessageReturner) {
   const chatId = getContext().chatId
 
-  await unsubscribeForMessage(chatId, async (message) => returnMessage(message))
+  await unsubscribeForMessage(chatId, returnMessage)
 }
 
 // called when new message data is coming into a websocket connection
