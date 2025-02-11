@@ -1,33 +1,27 @@
 import { getContext } from './storage'
 import {
-  type DisconnectHandler,
-  type MessageHandler,
-  type ConnectHandler,
-} from './types'
-import {
   publishMessage,
   subscribeForMessage,
   unsubscribeForMessage,
 } from '../adapters/pubsub/kafka-broker'
 import { Message } from '../domain/models/message'
 
-// using arrow functions to enforce type
 // called when websocket connection is initiated
-export const onConnect: ConnectHandler = async (returnMessage) => {
+export async function onConnect(returnMessage: (message: Message) => void) {
   const chatId = getContext().chatId
 
   await subscribeForMessage(chatId, async (message) => returnMessage(message))
 }
 
 // called when websocket connection is closed
-export const onDisconnect: DisconnectHandler = async (returnMessage) => {
+export async function onDisconnect(returnMessage: (message: Message) => void) {
   const chatId = getContext().chatId
 
   await unsubscribeForMessage(chatId, async (message) => returnMessage(message))
 }
 
-// called when message is coming into a websocket connection
-export const onMessage: MessageHandler = async (data) => {
+// called when new message data is coming into a websocket connection
+export async function onMessage(data: string) {
   const context = getContext()
 
   // TODO: parse incoming data

@@ -2,6 +2,11 @@ import { UnauthorizedError } from './errors'
 import { getContext } from './storage'
 import { type RequestContext } from '../domain/models/request-context'
 
+// validates path
+// authenticate user
+// authorize user against its actions
+// populate request context
+// TODO: maybe too much things going on here, potential refactor
 export async function authorize() {
   const context = getContext()
 

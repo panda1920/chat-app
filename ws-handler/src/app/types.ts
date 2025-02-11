@@ -1,13 +1,10 @@
-import { type Message } from '../domain/models/message'
+import { type authorize } from './auth'
+import { type onDisconnect, type onConnect, type onMessage } from './handlers'
 
-export type Authorizer = () => Promise<boolean>
+export type ConnectHandler = typeof onConnect
 
-export type MessageHandler = (data: string) => Promise<void>
+export type Authorizer = typeof authorize
 
-export type ConnectHandler = (
-  returnMessage: (message: Message) => void,
-) => Promise<void>
+export type MessageHandler = typeof onMessage
 
-export type DisconnectHandler = (
-  returnMessage: (message: Message) => void,
-) => Promise<void>
+export type DisconnectHandler = typeof onDisconnect
