@@ -68,9 +68,8 @@ services:
       - 8001:8001
     environment:
       DYNAMO_ENDPOINT: 'http://dynamo:8000'
-      AWS_REGION: 'ap-northeast-1'
-      AWS_ACCESS_KEY_ID: 'dummyAccessKey'
-      AWS_SECRET_ACCESS_KEY: 'dummySecret'
+    env_file:
+      - ./scripts/awsenv/.env.local
     depends_on:
       - dynamo
 
