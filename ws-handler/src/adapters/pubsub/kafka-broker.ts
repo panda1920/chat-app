@@ -1,9 +1,8 @@
 import { CompressionTypes } from 'kafkajs'
 import { producer, MESSAGES_TOPIC, subscriptionsByChatId } from './client'
 import { logger } from '../../app/logger'
-import { type MessageReturner } from '../../app/types'
+import { type RequestContext, type MessageReturner } from '../../app/types'
 import { serializeMessage, type Message } from '../../domain/models/message'
-import { type RequestContext } from '../../domain/models/request-context'
 
 export async function subscribeForMessage(
   chatId: RequestContext['chatId'],

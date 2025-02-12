@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { InternalServerError } from './errors'
-import { type RequestContext } from '../domain/models/request-context'
+import { type RequestContext } from './types'
 
 export const contextStorage = new AsyncLocalStorage<RequestContext>()
 

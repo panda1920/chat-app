@@ -1,9 +1,8 @@
 import { hostname } from 'node:os'
 import { Kafka } from 'kafkajs'
 import { logger } from '../../app/logger'
-import { type MessageReturner } from '../../app/types'
+import { type RequestContext, type MessageReturner } from '../../app/types'
 import { parseMessage } from '../../domain/models/message'
-import { type RequestContext } from '../../domain/models/request-context'
 
 // https://kafka.apache.org/documentation/#producerconfigs_client.id
 const CLIENT_ID = 'chat-app'

@@ -6,7 +6,7 @@ import { logger } from '../../app/logger'
 import { contextStorage } from '../../app/storage'
 import {
   type ConnectHandler,
-  type Authorizer,
+  type RequestHandler,
   type MessageHandler,
   type DisconnectHandler,
   type MessageReturner,
@@ -62,7 +62,7 @@ function onSocketError(error: Error) {
   logger.error(error)
 }
 
-function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
+function setupHttp(wss: WebSocketServer, onRequest: RequestHandler) {
   const server = createServer((_, res) => {
     // basic http listener that returns error
     res.writeHead(400)
@@ -76,7 +76,7 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
       socket.on('error', onSocketError)
 
       try {
-        await authorize()
+        await onRequest()
       } catch {
         logger.warn('Authorization failed')
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
@@ -106,7 +106,7 @@ function setupHttp(wss: WebSocketServer, authorize: Authorizer) {
 
 export function setupServer(config: {
   port: number
-  authorize: Authorizer
+  onRequest: RequestHandler
   onMessage: MessageHandler
   onConnect: ConnectHandler
   onDisconnect: DisconnectHandler
@@ -116,7 +116,7 @@ export function setupServer(config: {
     config.onConnect,
     config.onDisconnect,
   )
-  const server = setupHttp(wss, config.authorize)
+  const server = setupHttp(wss, config.onRequest)
   server.listen(config.port, '0.0.0.0', () =>
     logger.info(`Listening on port: ${config.port}`),
   )

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { type IncomingMessage } from 'node:http'
-import { type RequestContext } from '../../domain/models/request-context'
+import { type RequestContext } from '../../app/types'
 
 // create request context from http req
 export function createRequestContext(req: IncomingMessage) {
