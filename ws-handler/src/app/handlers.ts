@@ -6,6 +6,7 @@ import {
   subscribeForMessage,
   unsubscribeForMessage,
 } from '../adapters/pubsub/kafka-broker'
+import { postMessage } from '../adapters/repository/message-repository'
 import { Message } from '../domain/models/message'
 
 // validates path
@@ -59,5 +60,6 @@ export async function onMessage(data: string) {
   }
   const message = Message.parse(messageData)
 
+  await postMessage(message)
   await publishMessage(message)
 }

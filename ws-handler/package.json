@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.744.0",
     "kafkajs": "^2.2.4",
     "pino": "^9.6.0",
     "ws": "^8.18.0",
