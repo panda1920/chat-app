@@ -2,6 +2,7 @@ import { AsyncResource } from 'node:async_hooks'
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import { createRequestContext } from './context'
+import { wrapWithDefaults } from './handler-wrapper'
 import { logger } from '../../app/logger'
 import { contextStorage } from '../../app/storage'
 import {
@@ -13,6 +14,24 @@ import {
 } from '../../app/types'
 import { serializeMessage, type Message } from '../../domain/models/message'
 
+export function setupServer(config: {
+  port: number
+  onRequest: RequestHandler
+  onMessage: MessageHandler
+  onConnect: ConnectHandler
+  onDisconnect: DisconnectHandler
+}) {
+  const wss = setupWebsocket(
+    config.onMessage,
+    config.onConnect,
+    config.onDisconnect,
+  )
+  const server = setupHttp(wss, config.onRequest)
+  server.listen(config.port, '0.0.0.0', () =>
+    logger.info(`Listening on port: ${config.port}`),
+  )
+}
+
 function setupWebsocket(
   onMessage: MessageHandler,
   onConnect: ConnectHandler,
@@ -22,35 +41,51 @@ function setupWebsocket(
     noServer: true,
   })
 
-  // websocket setting
   wss.on('connection', async (ws) => {
-    ws.on('error', logger.error)
-
     logger.info('New websocket connection established')
 
     // a callback to send meessage back to connected websocket
-    const returnMessage: MessageReturner = AsyncResource.bind(
+    const returnMessage: MessageReturner = wrapWithDefaults(
+      ws,
       async (message: Message) => {
         logger.info('Returning messsage to client')
         ws.send(serializeMessage(message))
       },
     )
+
+    // do some subscription
     onConnect(returnMessage)
+
+    // handle websocket errors
+    ws.on(
+      'error',
+      wrapWithDefaults(ws, async (error) => {
+        logger.error(error, 'Error encountered during websocket communication')
+        ws.close()
+      }),
+    )
 
     // incoming messages
     ws.on(
       'message',
-      AsyncResource.bind(async (data) => {
+      wrapWithDefaults(ws, async (data) => {
         logger.info('New message arrived')
         await onMessage(data.toString())
       }),
     )
 
+    // on disconect
     ws.on(
       'close',
-      AsyncResource.bind(async () => {
-        logger.info('Closing websocket connection')
-        await onDisconnect(returnMessage)
+      wrapWithDefaults(ws, async () => {
+        try {
+          logger.info('Closing websocket connection')
+          await onDisconnect(returnMessage)
+        } catch (e) {
+          // make sure no further error propagates
+          // because that will trigger yet another close event
+          logger.error(e, 'Error occured during disconnection')
+        }
       }),
     )
   })
@@ -102,22 +137,4 @@ function setupHttp(wss: WebSocketServer, onRequest: RequestHandler) {
   })
 
   return server
-}
-
-export function setupServer(config: {
-  port: number
-  onRequest: RequestHandler
-  onMessage: MessageHandler
-  onConnect: ConnectHandler
-  onDisconnect: DisconnectHandler
-}) {
-  const wss = setupWebsocket(
-    config.onMessage,
-    config.onConnect,
-    config.onDisconnect,
-  )
-  const server = setupHttp(wss, config.onRequest)
-  server.listen(config.port, '0.0.0.0', () =>
-    logger.info(`Listening on port: ${config.port}`),
-  )
 }
