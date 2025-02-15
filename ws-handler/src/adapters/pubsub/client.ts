@@ -1,5 +1,5 @@
 import { hostname } from 'node:os'
-import { Kafka } from 'kafkajs'
+import { Kafka, logLevel, type logCreator } from 'kafkajs'
 import { logger } from '../../app/logger'
 import { type RequestContext, type MessageReturner } from '../../app/types'
 import { parseMessage } from '../../domain/models/message'
@@ -8,11 +8,40 @@ import { parseMessage } from '../../domain/models/message'
 const CLIENT_ID = 'chat-app'
 export const MESSAGES_TOPIC = 'chat-messages'
 
+// create custom logger for kafka client
+// https://kafka.js.org/docs/custom-logger
+const kafkaLogCreator: logCreator = (mainLevel: logLevel) => {
+  const toPinoLogLevel = (level: logLevel) => {
+    switch (level) {
+      case logLevel.NOTHING:
+      case logLevel.ERROR:
+        return 'error'
+      case logLevel.DEBUG:
+        return 'debug'
+      case logLevel.INFO:
+        return 'info'
+      case logLevel.WARN:
+        return 'warn'
+    }
+  }
+  const kafkaLogger = logger.child(
+    { name: 'ws-handler-kafka' },
+    { level: toPinoLogLevel(mainLevel) },
+  )
+
+  return ({ level, log }) => {
+    const { message, ...extra } = log
+    kafkaLogger[toPinoLogLevel(level)](extra, message)
+  }
+}
+
+// create kafka client
 // https://kafka.js.org/docs/configuration
 const kafka = new Kafka({
   clientId: CLIENT_ID,
   brokers: [process.env.BROKER_HOST || ''],
   // logLevel: logLevel.ERROR,
+  logCreator: kafkaLogCreator,
 })
 
 // https://kafka.js.org/docs/producing
@@ -37,7 +66,9 @@ export async function setupBroker() {
 
       // send message to all subscriptions that have the same chatId
       const subscriptions = subscriptionsByChatId[decoded.chatId] ?? []
-      Promise.allSettled(subscriptions.map((callback) => callback(decoded)))
+      await Promise.allSettled(
+        subscriptions.map((callback) => callback(decoded)),
+      )
     },
   })
 }

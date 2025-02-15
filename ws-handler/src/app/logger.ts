@@ -4,10 +4,11 @@ import { contextStorage } from './storage'
 // create pino options
 // https://github.com/pinojs/pino/blob/main/docs/api.md#options
 const options = {
-  name: 'ws-handler',
   level: 'trace',
-  mixin() {
+  mixin(_merge, _level, logger) {
     return {
+      // set name only when not set
+      name: logger.bindings()?.name ? undefined : 'ws-handler',
       // insert readable time, along with the default timestamp
       readableTime: new Date().toISOString(),
       // insert request context to output if available
