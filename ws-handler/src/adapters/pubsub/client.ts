@@ -71,6 +71,41 @@ export async function setupBroker() {
       )
     },
   })
+
+  // cleanup code when the server terminates
+  // https://github.com/tulios/kafkajs/blob/master/examples/producer.js
+  const errorTypes = ['unhandledRejection', 'uncaughtException'] as const
+  const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2'] as const
+
+  errorTypes.map((type) => {
+    process.on(type, async (e) => {
+      logger.error(e, 'Terminating due to error')
+      try {
+        await producer.disconnect()
+        await consumer.disconnect()
+        // when exceptions occur there is no way for nodejs to return to its normal processing
+        // which is why forceful termination with exit() is required here
+        process.exit(0)
+      } catch {
+        process.exit(1)
+      }
+    })
+  })
+
+  signalTraps.map((signal) => {
+    // because signals can be sent multiple times, once() ensures duplicate cleanup is not possible
+    process.once(signal, async () => {
+      logger.info(`Terminating due to signal: ${signal}`)
+      try {
+        await producer.disconnect()
+        await consumer.disconnect()
+      } finally {
+        // unlike exit(), kill() resends SIGKILL to nodejs
+        // provides nodejs a chance to perform potential cleanups
+        process.kill(process.pid, signal)
+      }
+    })
+  })
 }
 
 // all subscriptions go here
