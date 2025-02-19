@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { UnauthorizedError } from './errors'
 import { getContext } from './storage'
 import { type RequestContext, type MessageReturner } from './types'
@@ -53,6 +54,7 @@ export async function onMessage(data: string) {
 
   // TODO: parse incoming data
   const messageData = {
+    id: randomUUID(),
     chatId: context.chatId,
     message: data,
     from: context.userId,

@@ -3,10 +3,11 @@ import { InternalServerError, ParsingError } from '../../app/errors'
 import { logger } from '../../app/logger'
 
 export const Message = z.object({
+  id: z.string().min(1).max(36).describe('ID of message'),
   chatId: z
     .string()
     .min(1)
-    .max(32)
+    .max(36)
     .describe('ID of chat that message belongs to'),
   message: z
     .string()
