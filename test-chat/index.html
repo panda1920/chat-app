@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>
+  #messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+  }
+  .message {
+    padding: 1em;
+    border-radius: 2em;
+    border: 1px solid grey;
+  }
+</style>
+<body>
+  <h1>testchat</h1>
+  <div>
+    <div>messages:</div>
+    <div id="messages"></div>
+  </div>
+</body>
+<script>
+  async function init() {
+    const messages = await fetchChatMessages()
+    for (const message of messages) {
+      renderMessage(message)
+    }
+  }
+
+  async function fetchChatMessages() {
+    const url = 'http://localhost:8080/chat/testchat'
+    const result = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    })
+    const resultJson = await result.json()
+    if (!result.ok)  {
+      throw console.error(resultJson)
+      return []
+    }
+    return resultJson
+  }
+
+  function renderMessage(message) {
+    const {id, chatId, from, message: text, createdAt} = message
+    const messageDiv = document.createElement('div')
+    messageDiv.className = 'message'
+
+    const fromDiv = document.createElement('div')
+    fromDiv.innerText = `From: ${from}`
+    messageDiv.appendChild(fromDiv)
+
+    const textDiv = document.createElement('div')
+    textDiv.innerText = text
+    messageDiv.appendChild(textDiv)
+
+    const createdAtDiv = document.createElement('div')
+    createdAtDiv.innerText = new Date(parseInt(createdAt)).toISOString()
+    messageDiv.appendChild(createdAtDiv)
+
+    document.getElementById('messages').appendChild(messageDiv)
+  }
+
+  init()
+</script>
+</html>
