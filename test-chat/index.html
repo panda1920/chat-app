@@ -3,14 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>test-chat</title>
 </head>
 <style>
+  body {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 2em;
+    height: 100dvh;
+    margin: 0;
+    padding: 1em;
+    box-sizing: border-box;
+  }
   #messages {
     display: flex;
     flex-direction: column;
     gap: 1em;
-    margin-bottom: 2em;
+    overflow-y: auto;
   }
   .message {
     padding: 1em;
@@ -26,13 +35,15 @@
   }
 </style>
 <body>
-  <h1>testchat</h1>
-  <div>
-    <div>messages:</div>
-    <div id="messages"></div>
+  <header>
+    <h1>testchat</h1>
+  </header>
+
+  <div id="messages">
   </div>
 
   <form method="" action="" onsubmit="return handleSubmit(event)">
+    <label>Enter your message:</label>
     <textarea rows="5" id="textarea"></textarea>
     <button type="submit" id="submit">submit</button>
   </form>
@@ -59,6 +70,7 @@
     for (const message of messages) {
       renderMessage(message)
     }
+    scrollMessagesToBottom()
 
     // initialize websocket
     websocket = new WebSocket(`ws://localhost:8080/ws/chat/${chatId}`)
@@ -67,6 +79,7 @@
       try {
         const message = JSON.parse(event.data)
         renderMessage(message)
+        scrollMessagesToBottom()
       }
       catch(e) {
         console.error(e)
@@ -116,6 +129,12 @@
     messageDiv.appendChild(createdAtDiv)
 
     document.getElementById('messages').appendChild(messageDiv)
+  }
+
+  function scrollMessagesToBottom() {
+    const messagesDiv = document.getElementById('messages')
+    const realHeight = messagesDiv.scrollHeight;
+    messagesDiv.scroll({ top: realHeight })
   }
 
   init()
