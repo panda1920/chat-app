@@ -10,11 +10,19 @@
     display: flex;
     flex-direction: column;
     gap: 1em;
+    margin-bottom: 2em;
   }
   .message {
     padding: 1em;
-    border-radius: 2em;
+    border-radius: 1em;
     border: 1px solid grey;
+  }
+  textarea {
+    resize: none;
+    border-radius: 1em;
+    padding: .5em;
+    box-sizing: border-box;
+    width: 100%;
   }
 </style>
 <body>
@@ -23,17 +31,58 @@
     <div>messages:</div>
     <div id="messages"></div>
   </div>
+
+  <form method="" action="" onsubmit="return handleSubmit(event)">
+    <textarea rows="5" id="textarea"></textarea>
+    <button type="submit" id="submit">submit</button>
+  </form>
 </body>
 <script>
+  const chatId = 'testchat'
+  let websocket
+
+  function handleSubmit(e) {
+    e.preventDefault()
+
+    // send valid value to websocket
+    const textarea = document.getElementById('textarea')
+    if (!textarea.value) return
+    websocket.send(textarea.value)
+
+    // reset value
+    textarea.value = ""
+  }
+
   async function init() {
+    // render messages in chat
     const messages = await fetchChatMessages()
     for (const message of messages) {
       renderMessage(message)
     }
+
+    // initialize websocket
+    websocket = new WebSocket(`ws://localhost:8080/ws/chat/${chatId}`)
+    websocket.addEventListener('open', () => console.log('connection opened!'))
+    websocket.addEventListener('message', (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        renderMessage(message)
+      }
+      catch(e) {
+        console.error(e)
+      }
+    })
+
+    // add event listeners
+    document.getElementById('textarea').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        document.getElementById('submit').click()
+      }
+    })
   }
 
   async function fetchChatMessages() {
-    const url = 'http://localhost:8080/chat/testchat'
+    const url = `http://localhost:8080/chat/${chatId}`
     const result = await fetch(url, {
       method: 'GET',
       headers: {
@@ -55,15 +104,15 @@
     messageDiv.className = 'message'
 
     const fromDiv = document.createElement('div')
-    fromDiv.innerText = `From: ${from}`
+    fromDiv.textContent = `From: ${from}`
     messageDiv.appendChild(fromDiv)
 
     const textDiv = document.createElement('div')
-    textDiv.innerText = text
+    textDiv.textContent = text
     messageDiv.appendChild(textDiv)
 
     const createdAtDiv = document.createElement('div')
-    createdAtDiv.innerText = new Date(parseInt(createdAt)).toISOString()
+    createdAtDiv.textContent = new Date(parseInt(createdAt)).toISOString()
     messageDiv.appendChild(createdAtDiv)
 
     document.getElementById('messages').appendChild(messageDiv)
