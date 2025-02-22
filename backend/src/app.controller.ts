@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post } from '@nestjs/common'
 import { AppService } from './app.service'
 
 @Controller()
@@ -15,8 +15,8 @@ export class AppController {
     return this.appService.postMessage(body.message)
   }
 
-  @Get('/messages')
-  getMessages() {
-    return this.appService.getMessages()
+  @Get('/chat/:chatId')
+  getMessages(@Param('chatId') chatId: string) {
+    return this.appService.getMessages(chatId)
   }
 }

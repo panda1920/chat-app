@@ -4,10 +4,21 @@ import {
   PutItemCommand,
   QueryCommand,
 } from '@aws-sdk/client-dynamodb'
-import { Injectable, Logger } from '@nestjs/common'
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { Config } from '../config/env'
 import { Message } from '../entity/message'
+
+type PartitionKeyAttribute = 'chatId'
+type SortKeyAttribute = 'createdAt'
+type DynamoMessageAttribute = keyof Omit<
+  Message,
+  PartitionKeyAttribute | SortKeyAttribute
+>
 
 @Injectable()
 export default class MessageRepository {
@@ -34,21 +45,22 @@ export default class MessageRepository {
   private readonly sortKeyName: string
   private readonly logger = new Logger(MessageRepository.name)
 
-  async postMessage(message: string) {
-    const command = new PutItemCommand({
-      TableName: this.tableName,
-      Item: {
-        [this.partitionKeyName]: { S: this.createPartitionKey(1) }, // temporary chatroomId
-        [this.sortKeyName]: {
-          S: this.createSortKey(1, new Date()), // temporary, userId
-        },
-        message: { S: message },
-      },
-    })
-    return await this.client.send(command)
+  async postMessage(message: Message) {
+    this.logger.log('Posting message to dynamo')
+
+    try {
+      const command = new PutItemCommand({
+        TableName: this.tableName,
+        Item: this.convertToDynamoMessageItem(message),
+      })
+      return await this.client.send(command)
+    } catch (e) {
+      this.logger.warn(e)
+      throw new InternalServerErrorException('Failed to save message in dynamo')
+    }
   }
 
-  async getMessages(chatRoomId: number) {
+  async getMessages(chatId: string) {
     // batch requires primary key (both partition key and sortkey)
     // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
     // query requires just the partition key
@@ -57,7 +69,7 @@ export default class MessageRepository {
     // need to replace value with a placeholder because dynamo throws error with '#'
     const keyExpression = `${this.partitionKeyName} = :value`
     const expressionValue = {
-      ':value': { S: this.createPartitionKey(chatRoomId) },
+      ':value': { S: this.createPartitionKey(chatId) },
     }
     const items = []
     // dynamo has can only retrieve 25 items at a time
@@ -88,23 +100,41 @@ export default class MessageRepository {
     return items.map((item) => this.convertDynamoItemToMessage(item))
   }
 
-  private createPartitionKey(chatRoomId: number) {
-    return `ChatRoom#${chatRoomId}`
+  private convertToDynamoMessageItem(
+    message: Message,
+  ): Record<DynamoMessageAttribute & string, AttributeValue> {
+    return {
+      [this.partitionKeyName]: {
+        S: this.createPartitionKey(message.chatId),
+      },
+      [this.sortKeyName]: { S: this.createSortKey(message.createdAt) },
+      id: { S: message.id },
+      from: { S: message.from },
+      message: { S: message.message },
+    }
   }
 
-  private createSortKey(userId: number, d: Date) {
-    return `Message#${userId}#${d.getTime().toString()}`
+  private createPartitionKey(attribute: Message[PartitionKeyAttribute]) {
+    return `ChatRoom#${attribute}`
   }
 
-  private convertDynamoItemToMessage(item: Record<string, AttributeValue>) {
-    const [_1, chatRoomid] = item[this.partitionKeyName].S.split('#')
-    const [_2, userId, createdAt] = item[this.sortKeyName].S.split('#')
+  private createSortKey(attribute: Message[SortKeyAttribute]) {
+    return `Message#${attribute.toString()}`
+  }
+
+  private convertDynamoItemToMessage(
+    item: Record<DynamoMessageAttribute & string, AttributeValue>,
+  ): Message {
+    const { message, from, id, ...rest } = item
+    const [_1, chatId] = rest[this.partitionKeyName].S.split('#')
+    const [_2, createdAt] = rest[this.sortKeyName].S.split('#')
 
     return {
-      message: item.message.S,
-      createdBy: parseInt(userId),
-      chatRoomId: parseInt(chatRoomid),
-      createdAt: parseInt(createdAt),
-    } satisfies Message
+      id: id.S,
+      chatId,
+      from: from.S,
+      message: message.S,
+      createdAt,
+    }
   }
 }

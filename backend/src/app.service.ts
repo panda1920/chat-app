@@ -13,14 +13,20 @@ export class AppService {
 
   async postMessage(message: string) {
     this.logger.log('Posting message')
-    const result = await this.messageRepository.postMessage(message)
+    const result = await this.messageRepository.postMessage({
+      id: 'test_id',
+      chatId: 'test_chat',
+      from: 'test_user_id',
+      message,
+      createdAt: Date.now(),
+    })
     this.logger.log(
       'Message posting complete. Result: ' + JSON.stringify(result),
     )
   }
 
-  async getMessages() {
+  async getMessages(chatId: string) {
     this.logger.log('Getting message')
-    return await this.messageRepository.getMessages(1)
+    return await this.messageRepository.getMessages(chatId)
   }
 }
