@@ -14,7 +14,7 @@ export const Message = z.object({
     .min(1)
     .max(1000)
     .describe('The message text typed in by the user'),
-  from: z
+  fromId: z
     .string()
     .min(1)
     .max(32)

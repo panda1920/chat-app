@@ -109,7 +109,7 @@ export default class MessageRepository {
       },
       [this.sortKeyName]: { S: this.createSortKey(message.createdAt) },
       id: { S: message.id },
-      from: { S: message.from },
+      fromId: { S: message.fromId },
       message: { S: message.message },
     }
   }
@@ -125,16 +125,16 @@ export default class MessageRepository {
   private convertDynamoItemToMessage(
     item: Record<DynamoMessageAttribute & string, AttributeValue>,
   ): Message {
-    const { message, from, id, ...rest } = item
+    const { message, fromId, id, ...rest } = item
     const [_1, chatId] = rest[this.partitionKeyName].S.split('#')
     const [_2, createdAt] = rest[this.sortKeyName].S.split('#')
 
     return {
       id: id.S,
       chatId,
-      from: from.S,
+      fromId: fromId.S,
       message: message.S,
-      createdAt,
+      createdAt: parseInt(createdAt),
     }
   }
 }

@@ -44,7 +44,7 @@ function convertToDynamoMessageItem(
     },
     [sortKeyName]: { S: createSortKey(message.createdAt) },
     id: { S: message.id },
-    from: { S: message.from },
+    fromId: { S: message.fromId },
     message: { S: message.message },
   }
 }

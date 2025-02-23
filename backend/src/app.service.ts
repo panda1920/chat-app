@@ -16,7 +16,7 @@ export class AppService {
     const result = await this.messageRepository.postMessage({
       id: 'test_id',
       chatId: 'test_chat',
-      from: 'test_user_id',
+      fromId: 'test_user_id',
       message,
       createdAt: Date.now(),
     })

@@ -58,7 +58,10 @@
     // send valid value to websocket
     const textarea = document.getElementById('textarea')
     if (!textarea.value) return
-    websocket.send(textarea.value)
+    websocket.send(JSON.stringify({
+      type: 'messageText',
+      payload: { message: textarea.value }
+    }))
 
     // reset value
     textarea.value = ""
@@ -85,6 +88,8 @@
         console.error(e)
       }
     })
+    websocket.addEventListener('error', console.error)
+    websocket.addEventListener('close', console.log('closing connection!'))
 
     // add event listeners
     document.getElementById('textarea').addEventListener('keydown', (e) => {
@@ -112,12 +117,12 @@
   }
 
   function renderMessage(message) {
-    const {id, chatId, from, message: text, createdAt} = message
+    const {id, chatId, fromId, message: text, createdAt} = message
     const messageDiv = document.createElement('div')
     messageDiv.className = 'message'
 
     const fromDiv = document.createElement('div')
-    fromDiv.textContent = `From: ${from}`
+    fromDiv.textContent = `From: ${fromId}`
     messageDiv.appendChild(fromDiv)
 
     const textDiv = document.createElement('div')
@@ -125,7 +130,7 @@
     messageDiv.appendChild(textDiv)
 
     const createdAtDiv = document.createElement('div')
-    createdAtDiv.textContent = new Date(parseInt(createdAt)).toISOString()
+    createdAtDiv.textContent = new Date(createdAt).toISOString()
     messageDiv.appendChild(createdAtDiv)
 
     document.getElementById('messages').appendChild(messageDiv)

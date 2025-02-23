@@ -49,15 +49,14 @@ export async function onDisconnect(returnMessage: MessageReturner) {
 }
 
 // called when new message data is coming into a websocket connection
-export async function onMessage(data: string) {
+export async function onMessage(messageText: string) {
   const context = getContext()
 
-  // TODO: parse incoming data
   const messageData = {
     id: randomUUID(),
     chatId: context.chatId,
-    message: data,
-    from: context.userId,
+    message: messageText,
+    fromId: context.userId,
     createdAt: Date.now(),
   }
   const message = Message.parse(messageData)

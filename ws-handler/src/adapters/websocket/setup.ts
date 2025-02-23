@@ -2,6 +2,7 @@ import { AsyncResource } from 'node:async_hooks'
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
 import { createRequestContext } from './context'
+import { ChatClientDto } from './dto'
 import { wrapWithDefaults } from './handler-wrapper'
 import { logger } from '../../app/logger'
 import { contextStorage } from '../../app/storage'
@@ -70,7 +71,13 @@ function setupWebsocket(
       'message',
       wrapWithDefaults(ws, async (data) => {
         logger.info('New message arrived')
-        await onMessage(data.toString())
+
+        const dto = ChatClientDto.parse(JSON.parse(data.toString()))
+        switch (dto.type) {
+          case 'messageText':
+            await onMessage(dto.payload.message)
+            break
+        }
       }),
     )
 
