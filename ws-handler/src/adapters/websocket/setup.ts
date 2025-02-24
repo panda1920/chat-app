@@ -70,12 +70,15 @@ function setupWebsocket(
     ws.on(
       'message',
       wrapWithDefaults(ws, async (data) => {
-        logger.info('New message arrived')
-
         const dto = ChatClientDto.parse(JSON.parse(data.toString()))
         switch (dto.type) {
           case 'messageText':
+            logger.info('New message has arrived')
             await onMessage(dto.payload.message)
+            break
+          case 'ping':
+            logger.debug('ping')
+            ws.send(JSON.stringify({ type: 'pong' }))
             break
         }
       }),

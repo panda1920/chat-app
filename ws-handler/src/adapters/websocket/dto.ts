@@ -8,4 +8,7 @@ export const ChatClientDto = z.discriminatedUnion('type', [
     type: z.literal('messageText'),
     payload: MessagePayload,
   }),
+  z.object({
+    type: z.literal('ping'),
+  }),
 ])
