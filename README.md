@@ -3,6 +3,10 @@ A simple chat application.
 The primary motivation for this project is to gain rudimentary experience in websocket and AWS dynamodb. I also tried to tinker with interesting technologies that I have come across along the way.
 
 ### Instructions to test the app locally
+**prerequisites**
+- docker
+- bash shell
+
 ```bash
 # clone the repository
 git clone --

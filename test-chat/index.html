@@ -50,10 +50,23 @@
 </body>
 <script>
   const chatId = 'testchat'
+  const pingInterval = 1000 * 60 * 1
+  const inactivityTimeout = 1000 * 60 * 5
+  const debouncePeriod = 1000 * 5
+  const monitoredEvents = [
+    'mousemove', 'mousedown', 'keydown', 'wheel', 'scroll', 'touchstart', 'focus', 'blur', 'visibilitychange'
+  ]
+  let isUserActive = true
   let websocket
+  let inactivityTimer
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+
+    // reconnect websocket if closed
+    if (websocket.readyState === WebSocket.CLOSED) {
+      await reconnectWebsocket()
+    }
 
     // send valid value to websocket
     const textarea = document.getElementById('textarea')
@@ -63,12 +76,12 @@
       payload: { message: textarea.value }
     }))
 
-    // reset value
+    // reset input
     textarea.value = ""
   }
 
   async function init() {
-    // render messages in chat
+    // render fetched messages in chat
     const messages = await fetchChatMessages()
     for (const message of messages) {
       renderMessage(message)
@@ -76,12 +89,32 @@
     scrollMessagesToBottom()
 
     // initialize websocket
+    startWebsocket()
+
+    // add event listeners
+    document.getElementById('textarea').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        document.getElementById('submit').click()
+      }
+    })
+    monitoredEvents.forEach(event => {
+      window.addEventListener(event, debounce(reactivate))
+    })
+
+    // add timers
+    setInterval(pingWebsocket, pingInterval);
+    startInactivityTimer()
+  }
+
+  function startWebsocket() {
     websocket = new WebSocket(`ws://localhost:8080/ws/chat/${chatId}`)
     websocket.addEventListener('open', () => console.log('connection opened!'))
     websocket.addEventListener('message', (event) => {
       try {
-        const message = JSON.parse(event.data)
-        renderMessage(message)
+        const messageData = JSON.parse(event.data)
+        console.log(`message type: ${messageData.type}`)
+        if (messageData.type !== 'message') return
+        renderMessage(messageData.payload)
         scrollMessagesToBottom()
       }
       catch(e) {
@@ -90,23 +123,34 @@
     })
     websocket.addEventListener('error', console.error)
     websocket.addEventListener('close', console.log('closing connection!'))
-
-    // add event listeners
-    document.getElementById('textarea').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
-        document.getElementById('submit').click()
-      }
-    })
   }
 
-  async function fetchChatMessages() {
+  async function reconnectWebsocket() {
+    startWebsocket()
+      
+    // fetch messages that you may have been missing out
+    const lastMessageDiv = document.getElementById('messages').lastElementChild
+    if (!latestMessageDiv) return
+
+    const lastCreatedAt = dateString
+      ? new Date(lastMessageDiv.querySelector('.date').textContent).getTime()
+      : undefined
+    const messages = await fetchChatMessages(lastCreatedAt)
+    for (const message of messages) {
+      renderMessage(message)
+    }
+    scrollMessagesToBottom()
+  }
+
+  async function fetchChatMessages(lastCreatedAt) {
     const url = `http://localhost:8080/chat/${chatId}`
     const result = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-      }
+      },
+      params: { lastCreatedAt }
     })
     const resultJson = await result.json()
     if (!result.ok)  {
@@ -131,6 +175,7 @@
 
     const createdAtDiv = document.createElement('div')
     createdAtDiv.textContent = new Date(createdAt).toISOString()
+    createdAtDiv.className = 'date'
     messageDiv.appendChild(createdAtDiv)
 
     document.getElementById('messages').appendChild(messageDiv)
@@ -140,6 +185,41 @@
     const messagesDiv = document.getElementById('messages')
     const realHeight = messagesDiv.scrollHeight;
     messagesDiv.scroll({ top: realHeight })
+  }
+
+  function pingWebsocket() {
+    if (isUserActive && websocket.readyState === WebSocket.OPEN) {
+      websocket.send(JSON.stringify({ type: 'ping' }))
+    }
+  }
+
+  function startInactivityTimer() {
+    inactivityTimer = setTimeout(() => {
+      console.log('you are now inactive')
+      isUserActive = false
+    }, inactivityTimeout);
+  }
+
+  async function reactivate() {
+    console.log('you are now active')
+    isUserActive = true
+
+    // reconnect websocket if closed
+    if (websocket.readyState === WebSocket.CLOSED) {
+      await reconnectWebsocket()
+    }
+
+    // reset timer
+    clearInterval(inactivityTimer)
+    startInactivityTimer()
+  }
+
+  function debounce(func) {
+    let timer
+    return (...args) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => func(...args), debouncePeriod)
+    }
   }
 
   init()

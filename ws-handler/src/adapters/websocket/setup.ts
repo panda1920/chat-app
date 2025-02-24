@@ -13,7 +13,7 @@ import {
   type DisconnectHandler,
   type MessageReturner,
 } from '../../app/types'
-import { serializeMessage, type Message } from '../../domain/models/message'
+import { type Message } from '../../domain/models/message'
 
 export function setupServer(config: {
   port: number
@@ -50,7 +50,7 @@ function setupWebsocket(
       ws,
       async (message: Message) => {
         logger.info('Returning messsage to client')
-        ws.send(serializeMessage(message))
+        ws.send(JSON.stringify({ type: 'message', payload: message }))
       },
     )
 
