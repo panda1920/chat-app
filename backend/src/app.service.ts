@@ -25,8 +25,8 @@ export class AppService {
     )
   }
 
-  async getMessages(chatId: string) {
+  async getMessages(chatId: string, lastCreatedAt?: number) {
     this.logger.log('Getting message')
-    return await this.messageRepository.getMessages(chatId)
+    return await this.messageRepository.getMessages(chatId, lastCreatedAt)
   }
 }

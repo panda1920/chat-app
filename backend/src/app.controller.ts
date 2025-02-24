@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common'
 import { AppService } from './app.service'
 
 @Controller()
@@ -16,7 +16,10 @@ export class AppController {
   }
 
   @Get('/chat/:chatId')
-  getMessages(@Param('chatId') chatId: string) {
-    return this.appService.getMessages(chatId)
+  getMessages(
+    @Param('chatId') chatId: string,
+    @Query('lastCreatedAt') lastCreatedAt?: number,
+  ) {
+    return this.appService.getMessages(chatId, lastCreatedAt)
   }
 }

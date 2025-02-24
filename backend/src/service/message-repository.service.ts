@@ -60,7 +60,7 @@ export default class MessageRepository {
     }
   }
 
-  async getMessages(chatId: string) {
+  async getMessages(chatId: string, lastCreatedAt?: number) {
     // batch requires primary key (both partition key and sortkey)
     // https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
     // query requires just the partition key
@@ -71,12 +71,19 @@ export default class MessageRepository {
     const expressionValue = {
       ':value': { S: this.createPartitionKey(chatId) },
     }
+    // start reading from a particular primarkey, if requested
+    let cursor: Record<string, AttributeValue> | undefined = lastCreatedAt
+      ? {
+          [this.partitionKeyName]: { S: this.createPartitionKey(chatId) },
+          [this.sortKeyName]: { S: this.createSortKey(lastCreatedAt) },
+        }
+      : undefined
     const items = []
-    // dynamo has can only retrieve 25 items at a time
+
+    // dynamo can only retrieve 25 items at a time
     // pagination required to get all results
     // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.Pagination.html
     while (true) {
-      let cursor = undefined
       const command = new QueryCommand({
         TableName: this.tableName,
         KeyConditionExpression: keyExpression,
