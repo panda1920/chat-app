@@ -4,40 +4,26 @@ import { WebSocketServer } from 'ws'
 import { createRequestContext } from './context'
 import { ChatClientDto } from './dto'
 import { wrapWithDefaults } from './handler-wrapper'
+import {
+  onConnect,
+  onDisconnect,
+  onMessage,
+  onRequest,
+} from '../../app/handlers'
 import { logger } from '../../app/logger'
 import { contextStorage } from '../../app/storage'
-import {
-  type ConnectHandler,
-  type RequestHandler,
-  type MessageHandler,
-  type DisconnectHandler,
-  type MessageReturner,
-} from '../../app/types'
+import { type MessageReturner } from '../../app/types'
 import { type Message } from '../../domain/models/message'
 
-export function setupServer(config: {
-  port: number
-  onRequest: RequestHandler
-  onMessage: MessageHandler
-  onConnect: ConnectHandler
-  onDisconnect: DisconnectHandler
-}) {
-  const wss = setupWebsocket(
-    config.onMessage,
-    config.onConnect,
-    config.onDisconnect,
-  )
-  const server = setupHttp(wss, config.onRequest)
-  server.listen(config.port, '0.0.0.0', () =>
-    logger.info(`Listening on port: ${config.port}`),
+export function setupServer(port: number) {
+  const wss = setupWebsocket()
+  const server = setupHttp(wss)
+  server.listen(port, '0.0.0.0', () =>
+    logger.info(`Listening on port: ${port}`),
   )
 }
 
-function setupWebsocket(
-  onMessage: MessageHandler,
-  onConnect: ConnectHandler,
-  onDisconnect: DisconnectHandler,
-) {
+function setupWebsocket() {
   const wss = new WebSocketServer({
     noServer: true,
   })
@@ -107,7 +93,7 @@ function onSocketError(error: Error) {
   logger.error(error)
 }
 
-function setupHttp(wss: WebSocketServer, onRequest: RequestHandler) {
+function setupHttp(wss: WebSocketServer) {
   const server = createServer((_, res) => {
     // basic http listener that returns error
     res.writeHead(400)
