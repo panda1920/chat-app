@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import { UnauthorizedError } from './errors'
 import { getContext } from './storage'
 import { type RequestContext, type MessageReturner } from './types'
@@ -52,14 +51,11 @@ export async function onDisconnect(returnMessage: MessageReturner) {
 export async function onMessage(messageText: string) {
   const context = getContext()
 
-  const messageData = {
-    id: randomUUID(),
+  const message = Message.create({
     chatId: context.chatId,
     message: messageText,
     fromId: context.userId,
-    createdAt: Date.now(),
-  }
-  const message = Message.parse(messageData)
+  })
 
   await postMessage(message)
   await publishMessage(message)

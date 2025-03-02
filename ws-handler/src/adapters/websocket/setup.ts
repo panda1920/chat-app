@@ -36,7 +36,9 @@ function setupWebsocket() {
       ws,
       async (message: Message) => {
         logger.info('Returning messsage to client')
-        ws.send(JSON.stringify({ type: 'message', payload: message }))
+        ws.send(
+          JSON.stringify({ type: 'message', payload: message.getProps() }),
+        )
       },
     )
 

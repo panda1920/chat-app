@@ -5,7 +5,7 @@ import {
 } from '@aws-sdk/client-dynamodb'
 import { InternalServerError } from '../../app/errors'
 import { logger } from '../../app/logger'
-import { type Message } from '../../domain/models/message'
+import { type Message, type MessageProps } from '../../domain/models/message'
 
 const client = new DynamoDBClient()
 const tableName = process.env.DYNAMO_CHAT_TABLE_NAME || ''
@@ -16,7 +16,7 @@ const sortKeyName = process.env.DYNAMO_CHAT_TABLE_SORT_KEY || ''
 type PartitionKeyAttribute = 'chatId'
 type SortKeyAttribute = 'createdAt'
 type DynamoMessageAttribute = keyof Omit<
-  Message,
+  MessageProps,
   PartitionKeyAttribute | SortKeyAttribute
 >
 
@@ -49,10 +49,10 @@ function convertToDynamoMessageItem(
   }
 }
 
-function createPartitionKey(attribute: Message[PartitionKeyAttribute]) {
-  return `ChatRoom#${attribute}`
+function createPartitionKey(chatId: MessageProps['chatId']) {
+  return `ChatRoom#${chatId}`
 }
 
-function createSortKey(attribute: Message[SortKeyAttribute]) {
-  return `Message#${attribute.toString()}`
+function createSortKey(createdAt: MessageProps['createdAt']) {
+  return `Message#${createdAt.toString()}`
 }

@@ -2,7 +2,7 @@ import { hostname } from 'node:os'
 import { Kafka, logLevel, type logCreator } from 'kafkajs'
 import { logger } from '../../app/logger'
 import { type RequestContext, type MessageReturner } from '../../app/types'
-import { parseMessage } from '../../domain/models/message'
+import { Message } from '../../domain/models/message'
 
 // https://kafka.apache.org/documentation/#producerconfigs_client.id
 const CLIENT_ID = 'chat-app'
@@ -57,17 +57,17 @@ export async function setupBroker() {
   // for my usecase it felt like having one subscription per-server is the most optimal
   await consumer.subscribe({ topics: [MESSAGES_TOPIC], fromBeginning: false })
   await consumer.run({
-    eachMessage: async ({ message, heartbeat, pause }) => {
+    eachMessage: async ({ message: messageData }) => {
       logger.info('Consumed message from broker')
 
       // for now it is assumed that the consumer is subscribed to one topic only
       // so I am not checking which topic message is coming from
-      const decoded = parseMessage(message.value?.toString())
+      const message = Message.parseFromString(messageData.value?.toString())
 
       // send message to all subscriptions that have the same chatId
-      const subscriptions = subscriptionsByChatId[decoded.chatId] ?? []
+      const subscriptions = subscriptionsByChatId[message.chatId] ?? []
       await Promise.allSettled(
-        subscriptions.map((callback) => callback(decoded)),
+        subscriptions.map((callback) => callback(message)),
       )
     },
   })
