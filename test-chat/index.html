@@ -130,15 +130,15 @@
       
     // fetch messages that you may have been missing out
     const lastMessageDiv = document.getElementById('messages').lastElementChild
-    if (!latestMessageDiv) return
-
-    const lastCreatedAt = dateString
+    const lastCreatedAt = lastMessageDiv
       ? new Date(lastMessageDiv.querySelector('.date').textContent).getTime()
       : undefined
+
     const messages = await fetchChatMessages(lastCreatedAt)
     for (const message of messages) {
       renderMessage(message)
     }
+    
     scrollMessagesToBottom()
   }
 
