@@ -9,19 +9,19 @@ The primary motivation for this project is to gain rudimentary experience in web
 
 ```bash
 # clone the repository
-git clone --
-cd --
+git clone https://github.com/panda1920/chat-app.git
+cd chat-app
 
 # create file `scripts/awsenv/.env.local` from `scripts/awsenv/.env.local.example` and fill in the empty values. Make sure `AWS_REGION` is a valid region, but for every other keys any arbitrary value should be OK.
 cp scripts/awsenv/.env.local.example scripts/awsenv/.env.local
 
-# source script for utility shell alias/functions
+# source utility shell alias/functions
 . ./scripts/alias.sh
 
 # start containers
 up
 
-# open open the file `test-chat/index.html` in your browser
+# open file `test-chat/index.html` in your browser
 
 # terminate containers once you are done
 down
@@ -31,7 +31,7 @@ down
 ### Diagrams
 
 #### Architecture
-[architecture diagram local](docs/chat-architecture-local.webp)
+![architecture diagram local](docs/chat-architecture-local.webp)
 
 #### Sequence
-[sequence diagram](docs/chat-sequence-websocket.webp)
+![sequence diagram](docs/chat-sequence-websocket.webp)
