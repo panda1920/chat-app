@@ -2,6 +2,6 @@ export type Message = {
   id: string
   chatId: string
   fromId: string
-  message: string
+  text: string
   createdAt: number
 }

@@ -62,7 +62,7 @@ function setupWebsocket() {
         switch (dto.type) {
           case 'messageText':
             logger.info('New message has arrived')
-            await onMessage(dto.payload.message)
+            await onMessage(dto.payload.text)
             break
           case 'ping':
             logger.debug('ping')

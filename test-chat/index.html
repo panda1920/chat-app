@@ -73,7 +73,7 @@
     if (!textarea.value) return
     websocket.send(JSON.stringify({
       type: 'messageText',
-      payload: { message: textarea.value }
+      payload: { text: textarea.value }
     }))
 
     // reset input
@@ -161,7 +161,7 @@
   }
 
   function renderMessage(message) {
-    const {id, chatId, fromId, message: text, createdAt} = message
+    const {id, chatId, fromId, text, createdAt} = message
     const messageDiv = document.createElement('div')
     messageDiv.className = 'message'
 

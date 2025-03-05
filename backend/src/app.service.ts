@@ -11,20 +11,6 @@ export class AppService {
     return 'Hello New Year!'
   }
 
-  async postMessage(message: string) {
-    this.logger.log('Posting message')
-    const result = await this.messageRepository.postMessage({
-      id: 'test_id',
-      chatId: 'test_chat',
-      fromId: 'test_user_id',
-      message,
-      createdAt: Date.now(),
-    })
-    this.logger.log(
-      'Message posting complete. Result: ' + JSON.stringify(result),
-    )
-  }
-
   async getMessages(chatId: string, lastCreatedAt?: number) {
     this.logger.log('Getting message')
     return await this.messageRepository.getMessages(chatId, lastCreatedAt)

@@ -10,7 +10,7 @@ export const MessageValidator = z.object({
     .min(1)
     .max(36)
     .describe('ID of chat that message belongs to'),
-  message: z.string().min(1).max(1000).describe('Text'),
+  text: z.string().min(1).max(1000).describe('Text'),
   fromId: z.string().min(1).max(32).describe('The userId of the author'),
   createdAt: z
     .number()
@@ -71,8 +71,8 @@ export class Message {
   get chatId() {
     return this.props.chatId
   }
-  get message() {
-    return this.props.message
+  get text() {
+    return this.props.text
   }
   get fromId() {
     return this.props.fromId

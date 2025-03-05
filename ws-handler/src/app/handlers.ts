@@ -48,12 +48,12 @@ export async function onDisconnect(returnMessage: MessageReturner) {
 }
 
 // called when new message data is coming into a websocket connection
-export async function onMessage(messageText: string) {
+export async function onMessage(text: string) {
   const context = getContext()
 
   const message = Message.create({
     chatId: context.chatId,
-    message: messageText,
+    text: text,
     fromId: context.userId,
   })
 

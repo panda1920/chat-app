@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { MessageValidator } from '../../domain/models/message'
 
-const MessagePayload = MessageValidator.pick({ message: true })
+const MessagePayload = MessageValidator.pick({ text: true })
 
 export const ChatClientDto = z.discriminatedUnion('type', [
   z.object({
