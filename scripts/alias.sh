@@ -2,6 +2,7 @@
 CUR_DIR=$(cd -- $(dirname -- ${BASH_SOURCE[0]:-$0}) && pwd)
 ROOT_DIR=$CUR_DIR/..
 COMPOSE_FILE=$ROOT_DIR/docker-compose.yml
+PHONE_IP="192.168.1.240" # fixed IP address in router setting
 
 COMPOSE_COMMAND="docker compose -f $COMPOSE_FILE"
 BACKEND_EXEC_BASH="$COMPOSE_COMMAND exec -it backend bash -c"
@@ -132,4 +133,24 @@ function setupDynamo() {
 function connectws() {
   local chatId=${1:-test_chat}
   wscat -c "${WS_URL}/chat/${chatId}"
+}
+
+function connectPhone() {
+  echo "scanning $PHONE_IP for random debugging port..."
+  local port=$(nmap -sT $PHONE_IP -p30000-49999 | grep "/tcp open" | cut -d "/" -f 1)
+  if [ -z "$port" ]; then
+    echo -e "open port not found\nmake sure wireless debugging is enabled on your phone"
+    return 1
+  else
+    echo "port found: $port"
+  fi
+
+  adb connect ${PHONE_IP}:${port}
+
+  # edit vscode launch.json based on discovered port number
+  # flutter device id = ip:port
+  local filename="$ROOT_DIR/.vscode/launch.json"
+  if [ -f "$filename" ]; then
+    sed -i -E "s/${PHONE_IP}:[0-9]+/${PHONE_IP}:${port}/" $filename
+  fi
 }
